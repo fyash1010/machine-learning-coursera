@@ -67,7 +67,7 @@ Theta2_grad = zeros(size(Theta2));
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];
 
-% PART 1:
+% Cost function:
 total = 0;
 h = sigmoid([ones(m, 1) sigmoid([ones(m, 1) X] * Theta1')] * Theta2') %5000x10
 
@@ -85,10 +85,31 @@ end
 J = total / m;
 % Vectorized approach from chatgpt: J = (-1 / m) * sum(sum(expandedY .* log(h) + (1 - expandedY) .* log(1 - h)));
 
-% PART 2:
+% Regularized cost function:
 Theta1_slice = Theta1(:, 2:end);
 Theta2_slice = Theta2(:, 2:end);
 
 J += (lambda / (2 * m)) * (sum(sum(Theta1_slice .* Theta1_slice)) + sum(sum(Theta2_slice .* Theta2_slice)))
+
+% Backpropagation
+a1 = [ones(m, 1) X]; %5000x401
+z2 = a1 * Theta1'; %5000x25
+a2 = [ones(m, 1) sigmoid(z2)]; %5000x26
+z3 = a2 * Theta2'; %5000x10
+a3 = sigmoid(z3); %5000x10
+
+delta3 = a3 - expandedY; %5000x10
+delta2 = (delta3 * Theta2) .* [ones(m, 1) sigmoidGradient(z2)]; %5000x26 .* 5000x26 = 5000x26
+delta2 = delta2(:, 2:end); %5000x25
+
+Delta1 = delta2' * a1
+Delta2 = delta3' * a2
+
+Theta1_grad = (Delta1 / m) + (Theta1 * lambda / m);
+Theta1_grad(:, 1) -= Theta1(:, 1) * lambda / m;
+Theta2_grad = (Delta2 / m) + (Theta2 * lambda / m);
+Theta2_grad(:, 1) -= Theta2(:, 1) * lambda / m;
+
+grad = [Theta1_grad(:) ; Theta2_grad(:)];
 
 end
